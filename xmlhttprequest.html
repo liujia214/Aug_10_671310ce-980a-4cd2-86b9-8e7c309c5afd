@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <script>
+        document.addEventListener('DOMContentLoaded',function(){
+            function getGitHubSearch(){
+                var request = new XMLHttpRequest();
+                request.open('GET','https://api.github.com/search/repositories?q=nodejs');
+                //request.setRequestHeader('Content-Type','application/json');
+                request.addEventListener('readystatechange',function(){
+                    if(request.readyState === 4){
+                        if(request.status === 200){
+                            console.log(request.responseText);
+                            console.log(request.getAllResponseHeaders());
+                            console.log(request.getResponseHeader('Link'));
+                            console.log(request.getResponseHeader('Content-Type'));
+
+                            var type = request.getResponseHeader('Content-Type');
+                            if(type.indexOf('xml') != -1 && request.responseXML){
+                                console.log(request.responseXML);
+                            }else if(type === 'application/json'){
+                                //console.log(JSON.parse(request.responseText));
+                            }else{
+                                console.log(request.responseText);
+                            }
+                        }
+                    }
+                    //request.status === 200
+
+                });
+                request.send();
+            }
+            //synchronous request
+            function getSynchResponse(){
+                var request = new XMLHttpRequest();
+                request.open('GET','https://api.github.com/search/repositories?q=nodejs',false);
+                request.overrideMimeType('text/plain;charset=utf-8');
+                request.send(null);
+
+                if(request.status !== 200) throw new Error(request.statusText);
+                var type = request.getResponseHeader('Content-Type');
+                //if(!type.match(/^text/))
+                //  throw new Error('Expected text:'+ type);
+                return request.responseText;
+            }
+
+
+            function fromJsonToUrl(data){
+                if(!data) return "";
+                var array = [];
+                for(var name in data){
+                    if(!data.hasOwnProperty(name)) continue;
+                    if(typeof data[name] === 'function') continue;
+                    var value = data[name].toString();
+                    name = encodeURIComponent(name);
+                    value = encodeURIComponent(value);
+                    // value = encodeURIComponent(value.replace(' ','+'));
+                    array.push(name+'='+value);
+                }
+                return array.join('&');
+            }
+
+
+            function postData(url,data,callback){
+                var request = new XMLHttpRequest();
+                request.open('POST',url);
+                request.onreadystatechange = function(){
+                    if(request.readyState === 4 && callback){
+                        callback(request);
+                    }
+                };
+                request.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
+                request.send(fromJsonToUrl(data));
+            }
+
+            function getData(url,data,callback){
+                var request = new XMLHttpRequest();
+                request.open('GET',url+'?'+fromJsonToUrl(data));
+                request.onreadystatechange = function(){
+                    if(request.readyState ===4 && callback){
+                        callback(request);
+                    }
+                };
+                request.send();
+            }
+
+            function postJson(url,data,callback){
+                var request = new XMLHttpRequest();
+                request.open('POST',url);
+                request.onreadystatechange = function(){
+                    if(request.readyState === 4 && callback){
+                        callback(request);
+                    }
+                };
+                request.setRequestHeader('Content-Type','application/json');
+                request.send(JSON.stringify(data));
+            }
+
+            function postQuery(url,what,where,radius,callback){
+                var request = new XMLHttpRequest();
+                request.open('POST',url);
+                request.onreadystatechange = function(){
+                    if(request.readyState === 4 && callback){
+                        callback(request);
+                    }
+                };
+
+                var doc = document.implementation.createDocument('',query,null);
+                var query = doc.documentElement;
+                var find = doc.createElement('find');
+                find.setAttribute('zipcode',where);
+                find.setAttribute('radius',radius);
+                query.appendChild(find);
+                find.appendChild(doc.createTextNode(what));
+
+                request.send(doc);
+            }
+
+            function uploadFile(){
+                var input = document.querySelector('input[type="file"]');
+                var button = document.querySelector('button');
+                button.addEventListener('click',function(){
+                    console.log('submit');
+                    var file = input.files[0];
+                    if(!file) return;
+                    var request = new XMLHttpRequest();
+                    request.open('POST','/upload');
+                    request.send(file);
+                });
+            }
+
+            function postFormData(url,data,callback){
+                var request = new XMLHttpRequest();
+                request.open('POST',url);
+                request.onreadystatechange = function(){
+                    if(request.readyState === 4&& callback){
+                        callback(request);
+                    }
+                };
+                var formdata = new FormData();
+                for(var name in data){
+                  if(!data.hasOwnProperty(name)) continue;
+                  if(typeof data[name] === 'function') continue;
+                  var value = data[name];
+                  formdata.append(name,value);
+                }
+                request.send(formdata);
+            }
+
+
+
+
+            uploadFile();
+        });
+
+        //getSynchResponse();
+        //getGitHubSearch();
+
+        var obj = {name:'Amy Liu',age:23,getName:function(){}};
+        //console.log(typeof fromJsonToUrl(obj));
+
+
+    </script>
+</head>
+<body>
+    <input type="file">
+    <button>submit</button>
+</body>
+</html>

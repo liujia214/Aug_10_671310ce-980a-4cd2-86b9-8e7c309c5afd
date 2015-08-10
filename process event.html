@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <script>
+        document.addEventListener('DOMContendLoaded',function(){
+           var eles = document.getElementsByClassName('fileDropTarget');
+            Array.prototype.forEach.call(eles,function(ele){
+                var url = ele.getAttribute('data-uploadto');
+                if(!url) continue;
+                createFileUploadDropTarget(ele,url);
+            });
+
+            function createFileUploadDropTarget(target,url){
+                var uploading = false;
+                target.ondragenter = function(e){
+                    console.log('dragenter');
+                    if(uploading) return;
+                    var types = e.dataTransfer.types;
+                    if(types && ((types.contains && types.contains('Files')) || types.indexOf && types.indexOf('Files') !== -1)){
+                        target.classList.add('wantdrop');
+                        return false;
+                    }
+                };
+                target.ondragover = function(e){
+                    if(!uploading) return false;
+                };
+                target.ondragleave = function(e){
+                    if(!uploading) target.classList.remove('wantdrop');
+                };
+                target.ondrop = function(){
+                    if(uploading) return false;
+                    var files = e.dataTransfer.files;
+                    if(files && files.length){
+                        uploading = true;
+                        var message = 'Uploadnig files:<ul>';
+                        for(var i=0;i<files.length;i++){
+                            message += "<li>"+files[i].name+"</li>";
+                        }
+                        message +="</ul>";
+
+                        target.innerHTML = message;
+                        target.classList.remove('wantdrop');
+                        target.classList.add('uploading');
+
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('POST',url);
+                        var body = new FormData();
+                        for(var i = 0;i<files.length;i++) body.append(i,files[i]);
+                        xhr.upload.onprogress = function(e){
+                            if(e.lengthComputable){
+                                target.innerHTML = message + Math.round(e.loaded/ e.total*100)+"% Complete";
+                            }
+                        };
+                        xhr.upload.onload = function(e){
+                            uploading = false;
+                            target.classList.remove('uploading');
+                            target.innerHTML = "Drop files to upload";
+                        };
+                        xhr.send(body);
+                        return false;
+                    }
+                    target.classList.remove('wantdrop');
+                }
+            }
+        });
+    </script>
+</head>
+<body>
+
+</body>
+</html>
