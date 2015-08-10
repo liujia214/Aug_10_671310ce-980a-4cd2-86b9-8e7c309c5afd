@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <script>
+        function getJSONP(url,callback){
+            var cbnm = "cb" + getJSONP.counter++;
+            var cbname = "getJSONP."+cbnm;
+
+            if(url.indexOf("?")===-1){
+                url += "?jsonp" +  cbname;
+            }else{
+                url += "&jsonp" + cbname;
+            }
+
+            var script = document.createElement('script');
+            getJSONP[cbnm] = function(response){
+                try{
+                    callback(response);
+                }finally{
+                    delete getJSONP[cbnm];
+                    script.parentNode.removeChild(script);
+                }
+            };
+
+            script.src = url;
+            document.body.appendChild(script);
+        }
+        getJSONP.counter = 0;
+    </script>
+</head>
+<body>
+
+</body>
+</html>
